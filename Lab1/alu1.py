@@ -1,94 +1,139 @@
-from myhdl import block, always_comb, instances
+from myhdl import block, always_comb, instances, Signal
 
 #tag: ff15f3e8d1d9357da1414ff35032c8c5e0ba9813
 
 @block
 def ALU1bit(a, b, carryin, binvert, operation, result, carryout):
+    """
+    1-bit ALU
 
-    """ 1-bit ALU
+    result and carryout are output; all other signals are input.
 
-    result and carryout are output
-
-    all other signals are input
-
-    operation, the select signal to 4-input Mux, has two bits.
-    We can compare operation directly integers, for example, 
-        if operation == 0:
-
+    operation is a 2-bit select signal for a 4-input MUX.
     """
 
     # internal signals
     notb = Signal(bool(0))
-    mux1_out, and_out, or_out, adder_sum = (Signal(bool(0)), 
-                            Signal(bool(0)), Signal(bool(0)), Signal(bool(0)))
+    mux1_out = Signal(bool(0))
+    and_out  = Signal(bool(0))
+    or_out   = Signal(bool(0))
+    adder_sum = Signal(bool(0))
 
-    # we can read/set these signals (input, output, and internal) in submodules
-
-    # the 'always_comb' decorator indicates a combinational circuit 
-    # funciton name is not important. we could name it 'a_circuit' 
-    # MyHDL analyzes code and adds Signals (of MyHDL Signal type) that appear
-    # on the right hand side of any statements to a sentitivity list. 
-    # In this example, if b's value changed, this function com_not is called
-    # and notb will get a new value, which will trigger other submodules.
+    # ------------------------------
+    # NOT block for b -> notb
+    # ------------------------------
     @always_comb
     def comb_not():
-        # We may use 'and', 'or', 'not' operators on single-bit values
-        # for example, notb.next = not b
-        # However, we will use bitwise operators in this course. 
-        # Use "& 1" to keep the LSB only. 
-        # We only need to do "& 1" once in the end.
-        notb.next = (~ b) & 1
+        """
+        TODO:
+            Implement bitwise NOT of b, keeping only the least significant bit.
+            Hint:
+              - Use bitwise operator (~) instead of 'not'
+              - Use '& 1' once to keep only the LSB.
+        Example pattern (NOT the final answer):
+            notb.next = 0
+        """
+        notb.next = 0  # TODO: replace with correct expression
 
-    # the 2-1 MUX that generates mux1_out
+    # ------------------------------
+    # 2-to-1 MUX: chooses between b and notb -> mux1_out
+    # ------------------------------
     @always_comb
     def comb_mux_2_1():
-        # Use if-elif. 
-        # Remember to use mux1_out.next = ...
-        # TODO
-        if binvert: 
-            mux1_out.next = notb
-        else:
-            mux1_out.next = b
+        """
+        TODO:
+            Implement a 2-to-1 multiplexer:
+                if binvert == 0: select b
+                if binvert == 1: select notb
+            Then drive mux1_out.next with the selected value.
+        Example pattern (NOT the final answer):
+            if binvert:
+                mux1_out.next = 0
+            else:
+                mux1_out.next = 0
+        """
+        mux1_out.next = 0  # TODO: replace with correct logic
 
-    # the AND gate
+    # ------------------------------
+    # AND gate: a AND mux1_out -> and_out
+    # ------------------------------
     @always_comb
     def comb_and():
-        # TODO
-        and_out.next = (a & mux1_out) & 1
+        """
+        TODO:
+            Implement bitwise AND between a and mux1_out.
+            Keep only the LSB using '& 1' at the end.
+        Example pattern (NOT the final answer):
+            and_out.next = 0
+        """
+        and_out.next = 0  # TODO: replace with correct expression
 
-    # the OR gate
+    # ------------------------------
+    # OR gate: a OR mux1_out -> or_out
+    # ------------------------------
     @always_comb
     def comb_or():
-        # TODO
-        or_out.next = (a | mux1_out) & 1
+        """
+        TODO:
+            Implement bitwise OR between a and mux1_out.
+            Keep only the LSB using '& 1' at the end.
+        Example pattern (NOT the final answer):
+            or_out.next = 0
+        """
+        or_out.next = 0  # TODO: replace with correct expression
 
-    # adder.
+    # ------------------------------
+    # Full adder: a, mux1_out, carryin -> adder_sum, carryout
+    # ------------------------------
     @always_comb
     def comb_adder():
-        # Generate adder_sum and carryout
-        # The lecture slides have the logic expressions.
-        # TODO
-        adder_sum.next = (a ^ mux1_out ^ carryin) & 1
-        carryout.next = (a & mux1_out | a & carryin | mux1_out & carryin) & 1
+        """
+        TODO:
+            Implement a 1-bit full adder with inputs:
+                a, mux1_out, carryin
 
-    # 4-1 mux to generate result
+            Outputs:
+                adder_sum: sum bit
+                carryout: carry-out bit
+
+            Use bitwise operators (&, ^, |) and keep only the LSB where appropriate.
+
+        Example pattern (NOT the final answer):
+            adder_sum.next = 0
+            carryout.next  = 0
+        """
+        adder_sum.next = 0   # TODO: replace with full-adder sum logic
+        carryout.next  = 0   # TODO: replace with full-adder carry logic
+
+    # ------------------------------
+    # 4-to-1 MUX: selects final result based on operation
+    # ------------------------------
     @always_comb
     def comb_mux_4_1():
-        # Use if-elif-else. Remember to do "result.next = ..."
-        # TODO
-        if operation == 0:
-            result.next = and_out
-        elif operation == 1:
-            result.next = or_out
-        elif operation == 2:
-            result.next = adder_sum
-        else:
-            result.next = 0
+        """
+        TODO:
+            Implement a 4-to-1 multiplexer for 'result' based on 'operation':
+                operation == 0: use AND result
+                operation == 1: use OR result
+                operation == 2: use ADD result (adder_sum)
+                operation == 3: define behavior (e.g., set to 0 or something else)
 
-    # return all the functions/submodules 
-    # we could list them explicitly, like
-    #     return comb_not, comb_and, ...
+            Use if-elif-else and remember to assign to result.next.
+
+        Example pattern (NOT the final answer):
+            if operation == 0:
+                result.next = 0
+            elif operation == 1:
+                result.next = 0
+            elif operation == 2:
+                result.next = 0
+            else:
+                result.next = 0
+        """
+        result.next = 0  # TODO: replace with correct mux logic
+
     return instances()
+
 
 if __name__ == "__main__":
     from myhdl import intbv, delay, instance, Signal, StopSimulation, bin
@@ -102,12 +147,12 @@ if __name__ == "__main__":
         result = Signal(bool(0))
         carryout = Signal(bool(0))
 
-        a, b, carryin, binvert = [Signal(bool(0)) for i in range(4)]
+        a, b, carryin, binvert = [Signal(bool(0)) for _ in range(4)]
 
         # operation has two bits
         operation = Signal(intbv(0)[2:])
 
-        # instantiating a block
+        # instantiate ALU
         alu1 = ALU1bit(a, b, carryin, binvert, operation, result, carryout)
 
         @instance
@@ -116,16 +161,21 @@ if __name__ == "__main__":
             for op in args.op:
                 assert 0 <= op <= 3
                 for i in range(16):
-                    # use MyHDL intbv to split bits, instead of shift and AND
+                    # use MyHDL intbv to split bits
                     bi = intbv(i)
-                    a.next, b.next, carryin.next, binvert.next = \
-                        bi[0], bi[1], bi[2], bi[3]
+                    # bi[0], bi[1], ... are bits of i
+                    a.next       = bi[0]
+                    b.next       = bi[1]
+                    carryin.next = bi[2]
+                    binvert.next = bi[3]
+
                     operation.next = op
                     yield delay(10)
                     print("{} {} {} {}   {}    | {}    {}".format(
-                        bin(op, 2), 
-                        int(a), int(b), int(carryin), int(binvert), 
-                        int(carryout), int(result)))
+                        bin(op, 2),
+                        int(a), int(b), int(carryin), int(binvert),
+                        int(carryout), int(result)
+                    ))
 
             # stop simulation
             raise StopSimulation()
@@ -133,8 +183,9 @@ if __name__ == "__main__":
         return alu1, stimulus
 
     parser = argparse.ArgumentParser(description='Testing 1-bit ALU')
-    parser.add_argument('op', type=int, nargs='*', 
-            default=[0, 1, 2], help='operation')
+    parser.add_argument('op', type=int, nargs='*',
+                        default=[0, 1, 2],
+                        help='operation')
     parser.add_argument('--trace', action='store_true', help='generate trace')
     parser.add_argument('--verbose', '-v', action='store_true', help='verbose')
 
